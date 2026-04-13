@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PetDerm Dashboard</title>
+<style>
+  :root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2e3250;--accent:#6c63ff;--accent2:#00d4aa;--dog:#f59e0b;--cat:#ec4899;--text:#e2e8f0;--muted:#7c85a2;--danger:#ef4444;--warn:#f59e0b;--success:#22c55e;--r:10px}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+  .app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+  .sidebar{background:var(--surface);border-right:1px solid var(--border);padding:24px 0;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto}
+  .logo{padding:0 20px 24px;font-size:18px;font-weight:700;display:flex;align-items:center;gap:10px}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;font-size:14px;color:var(--muted);transition:all .15s;border-left:3px solid transparent}
+  .nav-item:hover{color:var(--text);background:var(--surface2)}
+  .nav-item.active{color:var(--accent);background:rgba(108,99,255,.1);border-left-color:var(--accent)}
+  .nav-sep{height:1px;background:var(--border);margin:8px 20px}
+  .sidebar-foot{margin-top:auto;padding:20px;font-size:11px;color:var(--muted)}
+  .main{padding:28px 32px;overflow-y:auto}
+  .page{display:none}.page.active{display:block}
+  .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+  .page-title{font-size:22px;font-weight:700}
+  .page-sub{font-size:13px;color:var(--muted);margin-top:3px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:14px;margin-bottom:24px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px}
+  .card-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px}
+  .card-val{font-size:28px;font-weight:700;line-height:1}
+  .card-sub{font-size:12px;color:var(--muted);margin-top:5px}
+  .sec{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:20px}
+  .sec-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;padding:8px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--border)}
+  td{padding:9px 12px;border-bottom:1px solid rgba(46,50,80,.4);vertical-align:middle}
+  tr:hover td{background:var(--surface2)}
+  .bar-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:3px;transition:width .4s}
+  .pill{padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600}
+  .pill-ok{background:rgba(34,197,94,.15);color:var(--success)}
+  .pill-mid{background:rgba(245,158,11,.15);color:var(--warn)}
+  .pill-low{background:rgba(239,68,68,.15);color:var(--danger)}
+  .s-pending{background:rgba(245,158,11,.15);color:var(--warn)}
+  .s-approved{background:rgba(34,197,94,.15);color:var(--success)}
+  .s-corrected{background:rgba(108,99,255,.15);color:var(--accent)}
+  .s-rejected{background:rgba(239,68,68,.15);color:var(--danger)}
+  .s-preclean{background:rgba(0,212,170,.12);color:var(--accent2)}
+  .badge-dog{background:rgba(245,158,11,.15);color:var(--dog);padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600}
+  .badge-cat{background:rgba(236,72,153,.15);color:var(--cat);padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600}
+  .badge-unk{background:rgba(124,133,162,.15);color:var(--muted);padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600}
+  .action-btn{padding:4px 10px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:600;transition:opacity .15s;margin:0 2px}
+  .action-btn:hover{opacity:.75}
+  .btn-approve{background:rgba(34,197,94,.2);color:var(--success)}
+  .btn-reject{background:rgba(239,68,68,.2);color:var(--danger)}
+  .btn-correct{background:rgba(108,99,255,.2);color:var(--accent)}
+  .feed-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid rgba(46,50,80,.4);font-size:13px}
+  .feed-dot{width:7px;height:7px;border-radius:50%;margin-top:4px;flex-shrink:0}
+  .rej-row{display:flex;align-items:center;gap:10px;font-size:13px;margin-bottom:9px}
+  .rej-lbl{width:220px;color:var(--muted);font-size:12px;flex-shrink:0}
+  .rej-track{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden}
+  .rej-fill{height:100%;border-radius:4px;background:var(--danger);opacity:.6}
+  .rej-num{width:30px;text-align:right;color:var(--danger);font-weight:600;font-size:12px}
+  .conf-bar{width:54px;height:5px;border-radius:3px;background:var(--border);overflow:hidden;display:inline-block;vertical-align:middle;margin-right:5px}
+  .conf-fill{height:100%;border-radius:3px;display:block}
+  .empty{padding:32px;text-align:center;color:var(--muted);font-size:13px}
+  .spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* PRECLEAN CARD GRID */
+  .preclean-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+  .pc-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+  .pc-img{width:100%;height:140px;object-fit:cover;background:var(--border)}
+  .pc-img-placeholder{width:100%;height:140px;background:var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px}
+  .pc-body{padding:12px}
+  .pc-meta{font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.5}
+  .pc-caption{font-size:12px;color:var(--accent2);margin-bottom:10px;font-style:italic}
+  .pc-selects{display:flex;gap:6px;margin-bottom:8px}
+  .pc-select{flex:1;padding:5px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none}
+  .pc-select:focus{border-color:var(--accent)}
+  .pc-actions{display:flex;gap:6px}
+  .pc-btn{flex:1;padding:6px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:600}
+  .pc-approve{background:rgba(34,197,94,.2);color:var(--success)}
+  .pc-reject{background:rgba(239,68,68,.2);color:var(--danger)}
+
+  /* PRECLEAN NOTES */
+  .pc-notes{width:100%;padding:5px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;resize:vertical;margin-bottom:8px;font-family:inherit;line-height:1.4}
+  .pc-notes:focus{outline:none;border-color:var(--accent)}
+  .pc-notes::placeholder{color:var(--muted)}
+
+  /* MODAL */
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;min-width:320px}
+  .modal h3{margin-bottom:14px}
+  .modal select,.modal input{width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:13px;margin-bottom:12px}
+  .modal-btns{display:flex;gap:8px;justify-content:flex-end}
+  .modal-btn{padding:7px 16px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:600}
+  .modal-cancel{background:var(--surface2);color:var(--muted)}
+  .modal-save{background:var(--accent);color:#fff}
+
+  /* API CONFIG BANNER */
+  #api-banner{background:rgba(108,99,255,.12);border:1px solid rgba(108,99,255,.3);border-radius:8px;padding:10px 16px;margin-bottom:20px;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:10px}
+  #api-banner strong{color:var(--accent)}
+  #api-url-input{flex:1;padding:5px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none}
+  #api-url-input:focus{border-color:var(--accent)}
+  #api-set-btn{padding:5px 12px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-size:11px;font-weight:600;cursor:pointer}
+
+  ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo"><span style="font-size:22px">🐾</span>PetDerm</div>
+  <div class="nav-item active" data-page="overview"><span>📊</span> Overview</div>
+  <div class="nav-item" data-page="preclean">
+    <span>🗂️</span> Pre-clean
+    <span id="pc-badge" style="margin-left:auto;background:rgba(0,212,170,.2);color:var(--accent2);padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700;display:none"></span>
+  </div>
+  <div class="nav-item" data-page="vetqueue">
+    <span>🩺</span> Vet Queue
+    <span id="vet-badge" style="margin-left:auto;background:rgba(108,99,255,.2);color:var(--accent);padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700;display:none"></span>
+  </div>
+  <div class="nav-item" data-page="dataset"><span>📁</span> Dataset</div>
+  <div class="nav-item" data-page="activity"><span>📡</span> Activity</div>
+  <div class="nav-sep"></div>
+  <div class="nav-item" id="refresh-btn"><span>🔄</span> Refresh</div>
+  <div class="sidebar-foot">
+    Server <span id="srv-status">checking…</span><br>
+    Updated <span id="last-update">—</span>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- API URL banner (shown when no api= param is set and not same-origin) -->
+  <div id="api-banner" style="display:none">
+    <strong>API URL:</strong>
+    <input id="api-url-input" type="text" placeholder="https://your-cloudrun-url.a.run.app"/>
+    <button id="api-set-btn">Connect</button>
+    <span id="api-current" style="color:var(--accent2);font-size:11px"></span>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="page-overview" class="page active">
+    <div class="page-header">
+      <div><div class="page-title">Overview</div><div class="page-sub">Live pipeline stats</div></div>
+      <span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;background:rgba(34,197,94,.15);color:var(--success)">● Live</span>
+    </div>
+    <div class="cards">
+      <div class="card"><div class="card-label">Total accepted</div><div class="card-val" id="ov-total" style="color:var(--accent)">—</div><div class="card-sub">in dataset</div></div>
+      <div class="card"><div class="card-label">Dogs</div><div class="card-val" id="ov-dog" style="color:var(--dog)">—</div></div>
+      <div class="card"><div class="card-label">Cats</div><div class="card-val" id="ov-cat" style="color:var(--cat)">—</div></div>
+      <div class="card"><div class="card-label">Pre-clean</div><div class="card-val" id="ov-preclean" style="color:var(--accent2)">—</div><div class="card-sub">awaiting vet label</div></div>
+      <div class="card"><div class="card-label">Vet queue</div><div class="card-val" id="ov-vet" style="color:var(--accent)">—</div><div class="card-sub">low confidence</div></div>
+      <div class="card"><div class="card-label">Rejected</div><div class="card-val" id="ov-rejected" style="color:var(--danger)">—</div></div>
+      <div class="card"><div class="card-label">Accept rate</div><div class="card-val" id="ov-rate" style="color:var(--success)">—</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div class="sec"><div class="sec-title">🐕 Dog classes</div><div id="dog-mini"></div></div>
+      <div class="sec"><div class="sec-title">🐈 Cat classes</div><div id="cat-mini"></div></div>
+    </div>
+    <div class="sec"><div class="sec-title">⚠️ Rejection breakdown</div><div id="rej-chart"><div class="empty">No rejections yet</div></div></div>
+  </div>
+
+  <!-- PRE-CLEAN -->
+  <div id="page-preclean" class="page">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Pre-clean queue</div>
+        <div class="page-sub">Images with no label — vet assigns species + disease class before they enter the dataset</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="openAddClassModal()" style="padding:6px 14px;border-radius:8px;border:none;background:rgba(108,99,255,.2);color:var(--accent);font-size:12px;font-weight:600;cursor:pointer">+ Add Class</button>
+        <span id="pc-count-badge" style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;background:rgba(0,212,170,.12);color:var(--accent2)"></span>
+      </div>
+    </div>
+    <div style="background:rgba(0,212,170,.06);border:1px solid rgba(0,212,170,.2);border-radius:8px;padding:12px 16px;font-size:13px;color:var(--accent2);margin-bottom:20px;line-height:1.6">
+      Every image sent without a recognisable caption lands here first.
+      Select species + disease class, then <strong>Approve</strong> to move it into the dataset — or <strong>Reject</strong> to discard it.
+      Approved images are normalised to 300×300 and assigned to train/val/test automatically.
+    </div>
+    <div id="pc-body"><div class="empty"><span class="spinner"></span>Loading…</div></div>
+  </div>
+
+  <!-- VET QUEUE -->
+  <div id="page-vetqueue" class="page">
+    <div class="page-header">
+      <div><div class="page-title">Vet queue</div><div class="page-sub">Model ran but confidence was below 63% — vet confirms or corrects</div></div>
+      <span id="vet-count-badge" style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;background:rgba(108,99,255,.15);color:var(--accent)"></span>
+    </div>
+    <div id="vet-body"><div class="empty"><span class="spinner"></span>Loading…</div></div>
+  </div>
+
+  <!-- DATASET -->
+  <div id="page-dataset" class="page">
+    <div class="page-header"><div><div class="page-title">Dataset</div><div class="page-sub">Train / val / test split per class</div></div></div>
+    <div id="dataset-body"><div class="empty"><span class="spinner"></span>Loading…</div></div>
+  </div>
+
+  <!-- ACTIVITY -->
+  <div id="page-activity" class="page">
+    <div class="page-header"><div><div class="page-title">Activity feed</div><div class="page-sub">Every image processed — newest first</div></div></div>
+    <div id="activity-body"><div class="empty"><span class="spinner"></span>Loading…</div></div>
+  </div>
+
+</main>
+</div>
+
+<!-- VET CORRECT MODAL -->
+<div class="modal-bg" id="correct-modal">
+  <div class="modal">
+    <h3>✏️ Correct label</h3>
+    <input type="hidden" id="modal-id"/>
+    <input type="hidden" id="modal-species"/>
+    <select id="modal-label"></select>
+    <div class="modal-btns">
+      <button class="modal-btn modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn modal-save" onclick="submitCorrection()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD CLASS MODAL -->
+<div class="modal-bg" id="add-class-modal">
+  <div class="modal">
+    <h3>➕ Add New Class</h3>
+    <select id="ac-species" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:13px;margin-bottom:12px">
+      <option value="dog">Dog</option>
+      <option value="cat">Cat</option>
+    </select>
+    <input type="text" id="ac-classname" placeholder="Class name (e.g. Hot_Spot)" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:13px;margin-bottom:8px"/>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.5">Spaces become underscores. The class will appear in dropdowns for labelling and future training.</p>
+    <div class="modal-btns">
+      <button class="modal-btn modal-cancel" onclick="closeAddClassModal()">Cancel</button>
+      <button class="modal-btn modal-save" onclick="submitAddClass()">Add Class</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── API URL ──────────────────────────────────────────────────────────────────
+// Priority: 1) ?api= query param  2) localStorage  3) same-origin (empty)
+//
+// Usage when hosted on Firebase / GCS:
+//   Open dashboard.html?api=https://vetapp-api-xxxx-uc.a.run.app
+//   The URL is saved to localStorage so you only need to pass it once.
+
+let API = new URLSearchParams(window.location.search).get('api')
+       || localStorage.getItem('vetapp_api')
+       || '';
+
+function initApiBanner() {
+  // Show banner only when opened as a local file (file://) or no API set
+  const isFile = window.location.protocol === 'file:';
+  const banner = document.getElementById('api-banner');
+  if (isFile || !API) {
+    banner.style.display = 'flex';
+    document.getElementById('api-url-input').value = API;
+    document.getElementById('api-current').textContent = API ? `Connected: ${API}` : '';
+  }
+  document.getElementById('api-set-btn').addEventListener('click', () => {
+    const val = document.getElementById('api-url-input').value.trim().replace(/\/$/, '');
+    API = val;
+    localStorage.setItem('vetapp_api', val);
+    document.getElementById('api-current').textContent = val ? `Connected: ${val}` : 'Same-origin';
+    loadAll();
+  });
+}
+
+const POLL = 10000;
+let DOG_CLASSES = ["Bacterial_dermatosis","Fungal_infections","Healthy","Hypersensitivity_allergic_dermatosis"];
+let CAT_CLASSES = ["Flea_Allergy","Healthy","Ringworm","Scabies"];
+let CLASSES = {dog: DOG_CLASSES, cat: CAT_CLASSES};
+
+async function loadClasses() {
+  const data = await apiGet('/api/classes');
+  if (data) {
+    DOG_CLASSES = data.dog || DOG_CLASSES;
+    CAT_CLASSES = data.cat || CAT_CLASSES;
+    CLASSES = {dog: DOG_CLASSES, cat: CAT_CLASSES};
+  }
+}
+
+// ── NAV ─────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-item[data-page]').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('page-' + el.dataset.page).classList.add('active');
+  });
+});
+document.getElementById('refresh-btn').addEventListener('click', loadAll);
+
+// ── FETCH ────────────────────────────────────────────────────────────────────
+async function apiGet(path) {
+  try {
+    const r = await fetch(API + path);
+    if (!r.ok) throw new Error(r.status);
+    return await r.json();
+  } catch(e) { console.error(path, e); return null; }
+}
+async function apiPost(path, body) {
+  try {
+    const r = await fetch(API + path, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    return await r.json();
+  } catch(e) { console.error(e); return null; }
+}
+
+function setServer(ok) {
+  document.getElementById('srv-status').innerHTML = ok
+    ? '<span style="color:var(--success)">● Online</span>'
+    : '<span style="color:var(--danger)">● Offline</span>';
+}
+
+// ── OVERVIEW ─────────────────────────────────────────────────────────────────
+async function loadOverview() {
+  const [ov, stats, rejs] = await Promise.all([
+    apiGet('/api/overview'), apiGet('/api/stats'), apiGet('/api/rejections')
+  ]);
+  if (!ov) { setServer(false); return; }
+  setServer(true);
+  document.getElementById('ov-total').textContent    = ov.total;
+  document.getElementById('ov-dog').textContent      = ov.dog;
+  document.getElementById('ov-cat').textContent      = ov.cat;
+  document.getElementById('ov-preclean').textContent = ov.preclean_pending;
+  document.getElementById('ov-vet').textContent      = ov.vet_pending;
+  document.getElementById('ov-rejected').textContent = ov.rejected;
+  document.getElementById('ov-rate').textContent     = ov.acceptance_rate + '%';
+
+  const pcb = document.getElementById('pc-badge');
+  pcb.textContent = ov.preclean_pending || '';
+  pcb.style.display = ov.preclean_pending > 0 ? '' : 'none';
+  const vb = document.getElementById('vet-badge');
+  vb.textContent = ov.vet_pending || '';
+  vb.style.display = ov.vet_pending > 0 ? '' : 'none';
+
+  if (stats) {
+    ['dog', 'cat'].forEach(sp => {
+      const cls = CLASSES[sp];
+      const sp_ = stats[sp] || {};
+      const tots = cls.map(c => Object.values(sp_[c] || {}).reduce((a, b) => a + b, 0));
+      const max = Math.max(...tots, 1);
+      const color = sp === 'dog' ? 'var(--dog)' : 'var(--cat)';
+      document.getElementById(sp + '-mini').innerHTML = cls.map((c, i) => {
+        const pct = Math.round(tots[i] / max * 100);
+        return `<div style="margin-bottom:9px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+            <span style="color:var(--muted)">${c.length > 24 ? c.slice(0, 22) + '…' : c}</span>
+            <span style="font-weight:600">${tots[i]}</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+        </div>`;
+      }).join('');
+    });
+  }
+
+  if (rejs && Object.keys(rejs).length) {
+    const max = Math.max(...Object.values(rejs), 1);
+    document.getElementById('rej-chart').innerHTML =
+      Object.entries(rejs).map(([r, n]) => `
+        <div class="rej-row">
+          <span class="rej-lbl">${r}</span>
+          <div class="rej-track"><div class="rej-fill" style="width:${Math.round(n / max * 100)}%"></div></div>
+          <span class="rej-num">${n}</span>
+        </div>`).join('');
+  }
+}
+
+// ── PRE-CLEAN ─────────────────────────────────────────────────────────────────
+// Images use GCS signed URLs returned directly in the API response (image_url field).
+async function loadPreclean() {
+  const items = await apiGet('/api/preclean');
+  const pending = items ? items.filter(i => i.status === 'pending') : [];
+  document.getElementById('pc-count-badge').textContent = `${pending.length} pending`;
+
+  if (!items || pending.length === 0) {
+    document.getElementById('pc-body').innerHTML =
+      '<div class="empty">Pre-clean queue is empty — all images have a label ✅</div>';
+    return;
+  }
+
+  document.getElementById('pc-body').innerHTML = `<div class="preclean-grid">${
+    pending.map(v => {
+      const spOpts = ['dog','cat'].map(s =>
+        `<option value="${s}"${v.species === s ? ' selected' : ''}>${s}</option>`
+      ).join('');
+      const clsOpts = (v.species === 'cat' ? CAT_CLASSES : DOG_CLASSES)
+        .map(c => `<option value="${c}">${c}</option>`).join('');
+      // Use GCS signed URL from API response (30-min expiry)
+      const imgUrl = v.image_url || '';
+      return `<div class="pc-card" id="pc-${v.id}">
+        ${imgUrl
+          ? `<img class="pc-img" src="${imgUrl}" alt="image"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>`
+          : ''}
+        <div class="pc-img-placeholder" style="display:${imgUrl ? 'none' : 'flex'}">No preview</div>
+        <div class="pc-body">
+          <div class="pc-meta">From: ${v.sender_name}<br>${new Date(v.queued_at).toLocaleString()}</div>
+          <div class="pc-caption">${v.caption || '(no caption)'}</div>
+          <textarea class="pc-notes" id="notes-${v.id}" placeholder="Add notes (optional)…" rows="2"></textarea>
+          <div class="pc-selects">
+            <select class="pc-select" id="sp-${v.id}" onchange="updateClsOptions(${v.id},this.value)">${spOpts}</select>
+            <select class="pc-select" id="cls-${v.id}">${clsOpts}</select>
+          </div>
+          <div class="pc-actions">
+            <button class="pc-btn pc-approve" onclick="approvePc(${v.id})">✓ Approve</button>
+            <button class="pc-btn pc-reject"  onclick="rejectPc(${v.id})">✕ Reject</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('')
+  }</div>`;
+}
+
+function updateClsOptions(id, species) {
+  const sel = document.getElementById('cls-' + id);
+  sel.innerHTML = (CLASSES[species] || []).map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+async function approvePc(id) {
+  const sp  = document.getElementById('sp-' + id).value;
+  const lbl = document.getElementById('cls-' + id).value;
+  const notes = document.getElementById('notes-' + id)?.value || '';
+  const card = document.getElementById('pc-' + id);
+  card.style.opacity = '.4';
+  const res = await apiPost('/api/preclean/decide', {id, status:'approved', vet_species:sp, vet_label:lbl, notes});
+  if (res && res.ok) { card.remove(); loadOverview(); }
+  else { card.style.opacity = '1'; alert('Error — check server logs'); }
+}
+async function rejectPc(id) {
+  const notes = document.getElementById('notes-' + id)?.value || '';
+  const card = document.getElementById('pc-' + id);
+  card.style.opacity = '.4';
+  const res = await apiPost('/api/preclean/decide', {id, status:'rejected', notes});
+  if (res && res.ok) { card.remove(); loadOverview(); }
+  else { card.style.opacity = '1'; }
+}
+
+// ── ADD CLASS ─────────────────────────────────────────────────────────────────
+function openAddClassModal() { document.getElementById('add-class-modal').classList.add('open'); }
+function closeAddClassModal() {
+  document.getElementById('add-class-modal').classList.remove('open');
+  document.getElementById('ac-classname').value = '';
+}
+async function submitAddClass() {
+  const species = document.getElementById('ac-species').value;
+  const name = document.getElementById('ac-classname').value.trim();
+  if (!name) { alert('Please enter a class name'); return; }
+  const res = await apiPost('/api/classes/add', {species, class_name: name});
+  if (res && res.ok) {
+    closeAddClassModal();
+    await loadClasses();
+    loadPreclean();
+    alert(`Class "${res.class_name || name}" added for ${species}.`);
+  } else { alert('Error adding class — check server logs'); }
+}
+
+// ── VET QUEUE ─────────────────────────────────────────────────────────────────
+async function loadVetQueue() {
+  const items = await apiGet('/api/vet-queue');
+  document.getElementById('vet-count-badge').textContent =
+    `${items ? items.filter(i => i.status === 'pending').length : 0} pending`;
+  if (!items || items.length === 0) {
+    document.getElementById('vet-body').innerHTML =
+      '<div class="empty">Vet queue empty — all predictions are high confidence ✅</div>';
+    return;
+  }
+  let html = `<table><thead><tr>
+    <th>File</th><th>Species</th><th>Predicted</th><th>Confidence</th>
+    <th>Sender</th><th>Queued</th><th>Status</th><th>Actions</th>
+  </tr></thead><tbody>`;
+  items.forEach(v => {
+    const cp = Math.round(v.confidence * 100);
+    const cc = v.confidence >= .7 ? 'var(--success)' : v.confidence >= .6 ? 'var(--warn)' : 'var(--danger)';
+    const spBadge = v.species === 'dog' ? 'badge-dog' : v.species === 'cat' ? 'badge-cat' : 'badge-unk';
+    const actions = v.status === 'pending'
+      ? `<button class="action-btn btn-approve" onclick="vetAct(${v.id},'approved','')">✓</button>
+         <button class="action-btn btn-correct" onclick="openModal(${v.id},'${v.species}')">✏</button>
+         <button class="action-btn btn-reject"  onclick="vetAct(${v.id},'rejected','')">✕</button>`
+      : `<span style="font-size:11px;color:var(--muted)">${v.vet_label || '—'}</span>`;
+    html += `<tr>
+      <td style="font-size:11px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.filename}</td>
+      <td><span class="${spBadge}">${v.species}</span></td>
+      <td style="font-weight:500">${v.pred_label}</td>
+      <td><span class="conf-bar"><span class="conf-fill" style="width:${cp}%;background:${cc}"></span></span>
+          <span style="font-size:12px;color:${cc};font-weight:600">${cp}%</span></td>
+      <td>${v.sender_name}</td>
+      <td style="color:var(--muted);font-size:11px">${new Date(v.queued_at).toLocaleString()}</td>
+      <td><span class="pill s-${v.status}">${v.status}</span></td>
+      <td style="white-space:nowrap">${actions}</td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById('vet-body').innerHTML = html;
+}
+
+async function vetAct(id, status, vet_label) {
+  await apiPost('/api/vet-decision', {id, status, vet_label});
+  loadVetQueue(); loadOverview();
+}
+
+// ── CORRECT MODAL ─────────────────────────────────────────────────────────────
+function openModal(id, species) {
+  document.getElementById('modal-id').value = id;
+  document.getElementById('modal-species').value = species;
+  document.getElementById('modal-label').innerHTML =
+    CLASSES[species]?.map(c => `<option value="${c}">${c}</option>`).join('') || '';
+  document.getElementById('correct-modal').classList.add('open');
+}
+function closeModal() { document.getElementById('correct-modal').classList.remove('open'); }
+async function submitCorrection() {
+  const id  = +document.getElementById('modal-id').value;
+  const lbl = document.getElementById('modal-label').value;
+  await vetAct(id, 'corrected', lbl);
+  closeModal();
+}
+
+// ── DATASET ───────────────────────────────────────────────────────────────────
+async function loadDataset() {
+  const stats = await apiGet('/api/stats');
+  if (!stats) {
+    document.getElementById('dataset-body').innerHTML = '<div class="empty">Could not reach server</div>';
+    return;
+  }
+  let html = '';
+  Object.entries(CLASSES).forEach(([sp, cls]) => {
+    const ss = stats[sp] || {};
+    const tots = cls.map(c => Object.values(ss[c] || {}).reduce((a, b) => a + b, 0));
+    const grand = tots.reduce((a, b) => a + b, 0);
+    const max = Math.max(...tots, 1);
+    const color = sp === 'dog' ? 'var(--dog)' : 'var(--cat)';
+    html += `<div class="sec" style="margin-bottom:20px">
+      <div class="sec-title">${sp === 'dog' ? '🐕' : '🐈'} ${sp.toUpperCase()} — ${grand} total</div>
+      <table><thead><tr>
+        <th>Class</th><th>Train</th><th>Val</th><th>Test</th><th>Total</th><th>Distribution</th><th>Status</th>
+      </tr></thead><tbody>`;
+    cls.forEach((c, i) => {
+      const s = ss[c] || {};
+      const tot = tots[i];
+      const pct = Math.round(tot / max * 100);
+      const sc = tot >= 150 ? 'pill-ok' : tot >= 50 ? 'pill-mid' : 'pill-low';
+      const st = tot >= 150 ? 'Good' : tot >= 50 ? 'Growing' : '⚠ Low';
+      html += `<tr>
+        <td style="font-weight:500">${c}</td>
+        <td>${s.train || 0}</td><td>${s.valid || 0}</td><td>${s.test || 0}</td>
+        <td style="font-weight:700">${tot}</td>
+        <td style="min-width:130px">
+          <div style="display:flex;align-items:center;gap:7px">
+            <div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+            <span style="font-size:11px;color:var(--muted);width:28px;text-align:right">${pct}%</span>
+          </div>
+        </td>
+        <td><span class="pill ${sc}">${st}</span></td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+  });
+  document.getElementById('dataset-body').innerHTML = html;
+}
+
+// ── ACTIVITY ──────────────────────────────────────────────────────────────────
+async function loadActivity() {
+  const items = await apiGet('/api/activity?limit=60');
+  if (!items || !items.length) {
+    document.getElementById('activity-body').innerHTML = '<div class="empty">No activity yet 📱</div>';
+    return;
+  }
+  const statusColor = {
+    accepted: 'var(--success)', preclean: 'var(--accent2)',
+    vet_queue: 'var(--accent)', rejected: 'var(--danger)'
+  };
+  document.getElementById('activity-body').innerHTML =
+    '<div class="sec">' + items.map(it => {
+      const col = statusColor[it.status] || 'var(--muted)';
+      const spTag = it.species
+        ? `<span class="${it.species === 'dog' ? 'badge-dog' : it.species === 'cat' ? 'badge-cat' : 'badge-unk'}" style="margin-right:5px">${it.species}</span>` : '';
+      const detail = it.status === 'accepted'
+        ? `${spTag}<strong>${it.label}</strong> → dataset`
+        : it.status === 'preclean'
+        ? `${spTag}<span style="color:var(--accent2)">→ pre-clean (no label)</span>`
+        : it.status === 'vet_queue'
+        ? `${spTag}<span style="color:var(--accent)">→ vet queue (low confidence)</span>`
+        : `<span style="color:var(--danger)">${it.reason}</span>`;
+      return `<div class="feed-item">
+        <div class="feed-dot" style="background:${col}"></div>
+        <div style="flex:1;line-height:1.5">
+          <div style="font-weight:500;font-size:13px">${it.filename}</div>
+          <div style="font-size:12px;color:var(--muted)">${detail} · from <strong>${it.sender_name || it.sender_id}</strong></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);white-space:nowrap;margin-left:8px">${it.processed_at ? new Date(it.processed_at).toLocaleTimeString() : ''}</div>
+      </div>`;
+    }).join('') + '</div>';
+}
+
+// ── LOAD ALL ──────────────────────────────────────────────────────────────────
+async function loadAll() {
+  document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+  await loadClasses();
+  await Promise.all([loadOverview(), loadPreclean(), loadVetQueue(), loadDataset(), loadActivity()]);
+}
+
+initApiBanner();
+loadAll();
+setInterval(loadAll, POLL);
+</script>
+</body>
+</html>
