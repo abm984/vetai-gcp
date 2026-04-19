@@ -43,6 +43,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # App code
 WORKDIR /app
 COPY app/ ./app/
+COPY dashboard.html ./
 
 # Cloud Run injects PORT; default to 8080
 ENV PORT=8080

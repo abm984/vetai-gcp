@@ -47,13 +47,16 @@ async def receive_message(request: Request):
     """Handle incoming WhatsApp messages; validate HMAC-SHA256 signature."""
     body_bytes = await request.body()
 
-    # Validate signature
-    sig = request.headers.get("X-Hub-Signature-256", "")
-    expected = "sha256=" + hmac.new(
-        WA_APP_SECRET.encode(), body_bytes, hashlib.sha256
-    ).hexdigest()
-    if not hmac.compare_digest(sig, expected):
-        raise HTTPException(status_code=401, detail="Invalid signature")
+    # Validate HMAC-SHA256 signature (skip only if secret not configured — dev mode)
+    if WA_APP_SECRET:
+        sig = request.headers.get("X-Hub-Signature-256", "")
+        expected = "sha256=" + hmac.new(
+            WA_APP_SECRET.encode(), body_bytes, hashlib.sha256
+        ).hexdigest()
+        if not hmac.compare_digest(sig, expected):
+            raise HTTPException(status_code=401, detail="Invalid signature")
+    else:
+        print("[WEBHOOK WARN] WA_APP_SECRET not set — skipping signature validation")
 
     data = json.loads(body_bytes)
     try:

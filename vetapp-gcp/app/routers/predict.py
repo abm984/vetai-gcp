@@ -16,6 +16,7 @@ from app.config import (
     DETECTION_CLASS_COLORS_HEX,
     DETECTION_CLASS_SEVERITY,
     DETECTION_CLASS_ADVICE,
+    GEMINI_API_KEY,
 )
 
 router = APIRouter(tags=["Detection"])
@@ -26,10 +27,10 @@ def status():
     """System status: model readiness, device, version."""
     st = detection.get_status()
     return {
-        "model_ready":  st["ready"],
-        "model_error":  st["error"],
-        "device":       str(detection.DEVICE),
-        "gemini_key_set": bool(__import__("app.config", fromlist=["GEMINI_API_KEY"]).GEMINI_API_KEY),
+        "model_ready":    st["ready"],
+        "model_error":    st["error"],
+        "device":         str(detection.DEVICE),
+        "gemini_key_set": bool(GEMINI_API_KEY),
     }
 
 

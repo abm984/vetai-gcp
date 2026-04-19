@@ -16,12 +16,43 @@ from __future__ import annotations
 
 import os
 import threading
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+
+# Load .env in local dev (no-op in Cloud Run where vars come from Secret Manager)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 from app.config import PORT, TMP_DIR
 from app.routers import predict, llm, webhook, dashboard
+
+_DASHBOARD_HTML = os.path.join(os.path.dirname(__file__), "..", "dashboard.html")
+
+
+# ── Lifespan ───────────────────────────────────────────────────────────────────
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # ── Startup ────────────────────────────────────────────────────────────────
+    os.makedirs(TMP_DIR, exist_ok=True)
+    os.makedirs(os.path.join(TMP_DIR, "models"), exist_ok=True)
+
+    from app.database import init_pool, init_tables
+    init_pool()
+    init_tables()
+
+    from app.models.detection import load_model
+    threading.Thread(target=load_model, daemon=True).start()
+
+    print("[STARTUP] VetApp API ready")
+    yield
+    # ── Shutdown (nothing to clean up) ────────────────────────────────────────
 
 
 # ── Application factory ────────────────────────────────────────────────────────
@@ -32,13 +63,15 @@ app = FastAPI(
         "Unified veterinary skin-disease diagnostic API.\n\n"
         "**Two capabilities in one service:**\n"
         "- `/predict` — EfficientNet-V2-S detection + GradCAM explainability\n"
-        "- `/llm/*` — Gemini 2.0 Flash treatment plan (streaming SSE)\n"
+        "- `/llm/*` — Gemini 2.5 Flash treatment plan (streaming SSE)\n"
         "- `/webhook` — WhatsApp Business data collection pipeline\n"
-        "- `/api/*` — Vet review dashboard (preclean, vet_queue, stats)"
+        "- `/api/*` — Vet review dashboard (preclean, vet_queue, stats)\n"
+        "- `/dashboard` — Vet review dashboard UI"
     ),
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # ── CORS ───────────────────────────────────────────────────────────────────────
@@ -60,26 +93,6 @@ app.include_router(webhook.router)
 app.include_router(dashboard.router)
 
 
-# ── Startup ────────────────────────────────────────────────────────────────────
-
-@app.on_event("startup")
-async def startup():
-    # 1. Scratch dir
-    os.makedirs(TMP_DIR, exist_ok=True)
-    os.makedirs(os.path.join(TMP_DIR, "models"), exist_ok=True)
-
-    # 2. Database
-    from app.database import init_pool, init_tables
-    init_pool()
-    init_tables()
-
-    # 3. Load detection model in background (non-blocking)
-    from app.models.detection import load_model
-    threading.Thread(target=load_model, daemon=True).start()
-
-    print("[STARTUP] VetApp API ready")
-
-
 # ── Health check ───────────────────────────────────────────────────────────────
 
 @app.get("/health", tags=["System"])
@@ -91,11 +104,18 @@ def health():
 @app.get("/", tags=["System"])
 def root():
     return {
-        "service": "Ovetra VetApp API",
-        "docs":    "/docs",
-        "health":  "/health",
-        "status":  "/status",
+        "service":   "Ovetra VetApp API",
+        "docs":      "/docs",
+        "health":    "/health",
+        "status":    "/status",
+        "dashboard": "/dashboard",
     }
+
+
+@app.get("/dashboard", tags=["System"], include_in_schema=False)
+def dashboard_page():
+    """Serve the vet review dashboard HTML."""
+    return FileResponse(_DASHBOARD_HTML, media_type="text/html")
 
 
 # ── Local dev entrypoint ───────────────────────────────────────────────────────

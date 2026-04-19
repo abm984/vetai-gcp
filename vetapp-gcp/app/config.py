@@ -148,7 +148,7 @@ DATABASE_URL: str = os.getenv(
 
 # ── LLM ───────────────────────────────────────────────────────────────────────
 GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
 LLM_SYSTEM_PROMPT = (
     "You are Dr. VetAI, a Senior Veterinary Dermatologist. Your tone is clinical, "

@@ -76,7 +76,7 @@ def _build_treatment_prompt(
 
 def _sse_gemini(prompt: str) -> Generator[str, None, None]:
     if not GEMINI_API_KEY:
-        yield f"data: {json.dumps({'error': 'GEMINI_API_KEY not configured'})}\n\n"
+        yield f"data: {json.dumps({'error': 'GEMINI_API_KEY not configured — set the secret in Cloud Run'})}\n\n"
         yield "data: [DONE]\n\n"
         return
 
@@ -90,7 +90,22 @@ def _sse_gemini(prompt: str) -> Generator[str, None, None]:
     }
     try:
         with _requests.post(url, json=payload, stream=True, timeout=90) as resp:
-            resp.raise_for_status()
+            if resp.status_code == 429:
+                yield f"data: {json.dumps({'error': 'Gemini quota exceeded. Free-tier daily limit reached — wait ~24 h or enable billing.'})}\n\n"
+                yield "data: [DONE]\n\n"
+                return
+            if resp.status_code == 400:
+                yield f"data: {json.dumps({'error': f'Gemini API bad request (400) — model \"{GEMINI_MODEL}\" may be unavailable or the request is malformed.'})}\n\n"
+                yield "data: [DONE]\n\n"
+                return
+            if resp.status_code == 403:
+                yield f"data: {json.dumps({'error': 'Gemini API key is invalid or lacks permission (403). Update the GEMINI_API_KEY secret.'})}\n\n"
+                yield "data: [DONE]\n\n"
+                return
+            if not resp.ok:
+                yield f"data: {json.dumps({'error': f'Gemini API error {resp.status_code}. Check your API key and try again.'})}\n\n"
+                yield "data: [DONE]\n\n"
+                return
             for line in resp.iter_lines():
                 if not line:
                     continue
@@ -111,8 +126,12 @@ def _sse_gemini(prompt: str) -> Generator[str, None, None]:
                             yield f"data: {json.dumps({'text': text})}\n\n"
                     except Exception:
                         pass
+    except _requests.exceptions.Timeout:
+        yield f"data: {json.dumps({'error': 'Gemini request timed out. Check your internet connection and try again.'})}\n\n"
+    except _requests.exceptions.ConnectionError:
+        yield f"data: {json.dumps({'error': 'Could not connect to Gemini API. Check network connectivity.'})}\n\n"
     except Exception as exc:
-        yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+        yield f"data: {json.dumps({'error': f'Gemini error: {type(exc).__name__}'})}\n\n"
 
     yield "data: [DONE]\n\n"
 

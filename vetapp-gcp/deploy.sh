@@ -56,7 +56,7 @@ gcloud run deploy "${SERVICE}" \
     --cpu 2 \
     --concurrency 10 \
     --timeout 300 \
-    --set-env-vars "PORT=8080,GCS_BUCKET=${GCS_BUCKET:-vetapp-data},GCS_MODELS_PREFIX=${GCS_MODELS_PREFIX:-models/},GEMINI_MODEL=gemini-2.0-flash" \
+    --set-env-vars "PORT=8080,GCS_BUCKET=${GCS_BUCKET:-vetapp-data},GCS_MODELS_PREFIX=${GCS_MODELS_PREFIX:-models/},GEMINI_MODEL=gemini-2.5-flash" \
     --update-secrets \
         "GEMINI_API_KEY=gemini-api-key:latest,\
 WA_ACCESS_TOKEN=wa-access-token:latest,\
