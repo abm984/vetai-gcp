@@ -80,7 +80,7 @@ else
   echo "[1/1] Submitting to Cloud Build (build + push + deploy)…"
   gcloud builds submit \
       --config cloudbuild.yaml \
-      --substitutions "_REGION=${REGION},_SERVICE=${SERVICE},_REPO=${REPO},_IMAGE=${IMAGE_NAME}" \
+      --substitutions "_REGION=${REGION},_SERVICE=${SERVICE},_REPO=${REPO},_IMAGE=${IMAGE_NAME},_TAG=${TAG}" \
       --project "${PROJECT_ID}" \
       .
 fi
