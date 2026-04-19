@@ -11,7 +11,13 @@
 # ──────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
-PROJECT_ID=$(gcloud config get-value project)
+PROJECT_ID=$(gcloud config get-value project 2>/dev/null || true)
+if [[ -z "${PROJECT_ID}" || "${PROJECT_ID}" == "(unset)" ]]; then
+  echo ""
+  echo "❌  GCP project is not set."
+  echo "    Run:  gcloud config set project YOUR_PROJECT_ID"
+  exit 1
+fi
 REGION=${REGION:-asia-south1}
 DB_INSTANCE=${DB_INSTANCE:-vetapp-db}
 DB_NAME=${DB_NAME:-vetapp}

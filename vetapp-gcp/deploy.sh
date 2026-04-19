@@ -15,7 +15,14 @@
 set -euo pipefail
 
 # ── Configuration ─────────────────────────────────────────────────────────────
-PROJECT_ID=$(gcloud config get-value project)
+PROJECT_ID=$(gcloud config get-value project 2>/dev/null || true)
+if [[ -z "${PROJECT_ID}" || "${PROJECT_ID}" == "(unset)" ]]; then
+  echo ""
+  echo "❌  GCP project is not set."
+  echo "    Run:  gcloud config set project YOUR_PROJECT_ID"
+  echo "    Then re-run this script."
+  exit 1
+fi
 REGION=${REGION:-asia-south1}           # override: REGION=us-central1 ./deploy.sh
 SERVICE=${SERVICE:-vetapp-api}
 REPO=${REPO:-vetapp}
