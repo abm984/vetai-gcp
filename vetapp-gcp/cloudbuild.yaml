@@ -5,14 +5,14 @@
 #   1. Manual submit:  gcloud builds submit / bash deploy.sh  (_TAG = git SHA)
 #   2. Auto trigger:   Cloud Build Trigger on push to main    (_TAG = $SHORT_SHA)
 # ──────────────────────────────────────────────────────────────────────────────
-
+ 
 substitutions:
   _REGION: asia-south1
   _SERVICE: vetapp-api
   _REPO: vetapp
   _IMAGE: vetapp-api
   _TAG: latest              # overridden by deploy.sh with the git short SHA
-
+ 
 steps:
   # 1. Build image
   - name: gcr.io/cloud-builders/docker
@@ -26,7 +26,7 @@ steps:
       - --cache-from
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest
       - .
-
+ 
   # 2. Push both tags to Artifact Registry
   - name: gcr.io/cloud-builders/docker
     id: push
@@ -34,7 +34,7 @@ steps:
       - push
       - --all-tags
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}
-
+ 
   # 3. Deploy to Cloud Run
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     id: deploy
@@ -59,16 +59,16 @@ steps:
       - --timeout
       - "300"
       - --set-env-vars
-      - PORT=8080,GCS_BUCKET=vetapp-data,GCS_MODELS_PREFIX=models/,GEMINI_MODEL=gemini-2.5-flash
+      - GCS_BUCKET=vetapp-data,GCS_MODELS_PREFIX=models/,GEMINI_MODEL=gemini-2.5-flash
       - --update-secrets
       - GEMINI_API_KEY=gemini-api-key:latest,WA_ACCESS_TOKEN=wa-access-token:latest,WA_APP_SECRET=wa-app-secret:latest,WA_VERIFY_TOKEN=wa-verify-token:latest,WA_PHONE_ID=wa-phone-id:latest,VET_NUMBERS=vet-numbers:latest,DATABASE_URL=vetapp-db-url:latest
       - --add-cloudsql-instances
       - $PROJECT_ID:${_REGION}:vetapp-db
-
+ 
 images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:${_TAG}
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest
-
+ 
 options:
   logging: CLOUD_LOGGING_ONLY
   machineType: E2_HIGHCPU_8
