@@ -4,10 +4,10 @@ routers/llm.py — Gemini-powered LLM treatment plan endpoints.
 All responses are Server-Sent Events (SSE) so the client receives
 streamed text as it is generated.
 
-GET /llm/treatment?disease=…&conf=…&dog_name=…&dog_age=…&dog_species=…
+GET /llm/treatment?disease=…&conf=…&pet_name=…&pet_age=…&pet_breed=…
     Stream a full clinical management plan for the diagnosed condition.
 
-GET /llm/followup?disease=…&conf=…&q=…&dog_name=…&dog_age=…&dog_species=…
+GET /llm/followup?disease=…&conf=…&q=…&pet_name=…&pet_age=…&pet_breed=…
     Stream an answer to a vet/owner follow-up question in the context
     of the current diagnosis.
 """
@@ -35,12 +35,12 @@ _SSE_HEADERS = {
 
 def _build_treatment_prompt(
     disease: str, confidence: float,
-    dog_name: str = "", dog_age: str = "", dog_species: str = "",
+    pet_name: str = "", pet_age: str = "", pet_breed: str = "",
 ) -> str:
     profile_parts = [p for p in [
-        f"Name: {dog_name}" if dog_name else "",
-        f"Age: {dog_age} years" if dog_age else "",
-        f"Breed/Species: {dog_species}" if dog_species else "",
+        f"Name: {pet_name}" if pet_name else "",
+        f"Age: {pet_age} years" if pet_age else "",
+        f"Breed: {pet_breed}" if pet_breed else "",
     ] if p]
     patient_header = (
         f"**Patient Profile:** {', '.join(profile_parts)}\n\n"
@@ -53,8 +53,8 @@ def _build_treatment_prompt(
             f"Clinical Assessment: The integumentary scan indicates a 'Healthy' status "
             f"with {confidence:.1f}% confidence. Provide a **Proactive Maintenance Plan** "
             "focusing on barrier function, nutrition, and early detection of lesions."
-            + (f" Tailor advice specifically for {dog_name} the {dog_species}."
-               if dog_name and dog_species else "")
+            + (f" Tailor advice specifically for {pet_name} the {pet_breed}."
+               if pet_name and pet_breed else "")
         )
     return (
         f"{patient_header}"
@@ -67,8 +67,8 @@ def _build_treatment_prompt(
         "4. **Prognosis & Recovery**: (Expected healing milestones)\n"
         "5. **Long-term Prophylaxis**: (Strategies to prevent recurrence)\n\n"
         "Maintain a professional, diagnostic tone throughout."
-        + (f"\n\nNote: The patient is {dog_name}, a {dog_age}-year-old {dog_species}. "
-           "Adjust dosing and care advice accordingly." if dog_name else "")
+        + (f"\n\nNote: The patient is {pet_name}, a {pet_age}-year-old {pet_breed}. "
+           "Adjust dosing and care advice accordingly." if pet_name else "")
     )
 
 
@@ -142,9 +142,9 @@ def _sse_gemini(prompt: str) -> Generator[str, None, None]:
 def llm_treatment(
     disease: str = "",
     conf: float = 0.0,
-    dog_name: str = "",
-    dog_age: str = "",
-    dog_species: str = "",
+    pet_name: str = "",
+    pet_age: str = "",
+    pet_breed: str = "",
 ):
     """
     Stream a clinical management plan as SSE.
@@ -152,7 +152,7 @@ def llm_treatment(
     Connect via `EventSource('/llm/treatment?disease=Mange&conf=87.3')`.
     Each event carries `{"text": "..."}`.  The stream ends with `[DONE]`.
     """
-    prompt = _build_treatment_prompt(disease, conf, dog_name, dog_age, dog_species)
+    prompt = _build_treatment_prompt(disease, conf, pet_name, pet_age, pet_breed)
     return StreamingResponse(
         _sse_gemini(prompt),
         media_type="text/event-stream",
@@ -165,9 +165,9 @@ def llm_followup(
     disease: str = "",
     conf: float = 0.0,
     q: str = "",
-    dog_name: str = "",
-    dog_age: str = "",
-    dog_species: str = "",
+    pet_name: str = "",
+    pet_age: str = "",
+    pet_breed: str = "",
 ):
     """
     Stream an answer to a follow-up question as SSE.
@@ -175,9 +175,9 @@ def llm_followup(
     The question *q* is answered in the context of the current diagnosis.
     """
     parts = [p for p in [
-        dog_name,
-        f"{dog_age}-year-old" if dog_age else "",
-        dog_species,
+        pet_name,
+        f"{pet_age}-year-old" if pet_age else "",
+        pet_breed,
     ] if p]
     patient_ctx = f"Patient: {' '.join(parts)}. " if parts else ""
 

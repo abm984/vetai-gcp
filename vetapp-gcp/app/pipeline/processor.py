@@ -1,12 +1,10 @@
 """
 pipeline/processor.py — Validate, deduplicate, and route incoming images.
 
-Ported from Arch/pipeline.py with three key adaptations:
-  1. Images are stored in GCS instead of local directories.
-  2. State (hashes, queues, logs) lives in PostgreSQL instead of SQLite.
-  3. Input is raw bytes (from WhatsApp download) instead of local file paths.
+Images are stored in GCS; state lives in PostgreSQL.
+Input is raw bytes submitted via the /ingest API endpoint.
 
-Routing logic mirrors the original:
+Routing logic:
   ┌─ Caption has species + label → run ensemble
   │     ├─ conf ≥ threshold  → dataset/{species}/{split}/{label}/
   │     └─ conf < threshold  → vet_queue/
@@ -180,7 +178,7 @@ def process_incoming(
                 """
                 INSERT INTO preclean
                   (filepath, species, caption, sender_id, sender_name,
-                   wa_timestamp, queued_at)
+                   submitted_at, queued_at)
                 VALUES (%s,%s,%s,%s,%s,%s,%s)
                 ON CONFLICT (filepath) DO NOTHING
                 """,
@@ -222,7 +220,7 @@ def process_incoming(
                 """
                 INSERT INTO vet_queue
                   (filepath, species, pred_label, confidence,
-                   sender_id, sender_name, wa_timestamp, queued_at)
+                   sender_id, sender_name, submitted_at, queued_at)
                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
                 ON CONFLICT (filepath) DO NOTHING
                 """,

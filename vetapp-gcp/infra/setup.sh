@@ -116,7 +116,7 @@ echo "  ── Secrets requiring YOUR values ──"
 echo "  The following secrets are created with placeholder values."
 echo "  Replace them in Secret Manager → Console before deploying:"
 echo ""
-for SECRET in gemini-api-key wa-access-token wa-app-secret wa-verify-token wa-phone-id vet-numbers; do
+for SECRET in gemini-api-key; do
     gcloud secrets create "${SECRET}" --replication-policy automatic \
         --project "${PROJECT_ID}" 2>/dev/null || true
     echo -n "REPLACE_ME" | gcloud secrets versions add "${SECRET}" \
@@ -141,6 +141,11 @@ gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
     --member "serviceAccount:${SA}" \
     --role roles/cloudsql.client --quiet
+
+# Required for GCS V4 signed URLs (dashboard image previews)
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+    --member "serviceAccount:${SA}" \
+    --role roles/iam.serviceAccountTokenCreator --quiet
 
 # ── Upload model files reminder ───────────────────────────────────────────────
 echo "[7/7] Model file upload instructions…"

@@ -63,15 +63,9 @@ if [[ "${LOCAL}" == "1" ]]; then
       --cpu 2 \
       --concurrency 10 \
       --timeout 300 \
-      --set-env-vars "GCS_BUCKET=${GCS_BUCKET:-vetapp-data},GCS_MODELS_PREFIX=${GCS_MODELS_PREFIX:-models/},GEMINI_MODEL=gemini-2.5-flash" \
+      --set-env-vars "PORT=8080,GCS_BUCKET=${GCS_BUCKET:-vetapp-data},GCS_MODELS_PREFIX=${GCS_MODELS_PREFIX:-models/},GEMINI_MODEL=gemini-2.5-flash" \
       --update-secrets \
-          "GEMINI_API_KEY=gemini-api-key:latest,\
-WA_ACCESS_TOKEN=wa-access-token:latest,\
-WA_APP_SECRET=wa-app-secret:latest,\
-WA_VERIFY_TOKEN=wa-verify-token:latest,\
-WA_PHONE_ID=wa-phone-id:latest,\
-VET_NUMBERS=vet-numbers:latest,\
-DATABASE_URL=vetapp-db-url:latest" \
+          "GEMINI_API_KEY=gemini-api-key:latest,DATABASE_URL=vetapp-db-url:latest" \
       --add-cloudsql-instances "${PROJECT_ID}:${REGION}:vetapp-db"
 
 else
@@ -98,5 +92,5 @@ if [[ -n "${URL}" ]]; then
   echo "    Docs     : ${URL}/docs"
   echo "    Dashboard: ${URL}/dashboard"
   echo ""
-  echo "Set your WhatsApp webhook URL to: ${URL}/webhook"
+  echo "    Ingest   : ${URL}/ingest"
 fi

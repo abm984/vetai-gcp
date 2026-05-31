@@ -8,7 +8,6 @@ references pointing to Google Secret Manager entries.
 """
 
 import os
-from typing import Set
 
 # ── Species & Classes ──────────────────────────────────────────────────────────
 SPECIES = ["dog", "cat"]
@@ -159,16 +158,6 @@ LLM_SYSTEM_PROMPT = (
     "Always include a professional disclaimer that this is a digital triage and not a "
     "replacement for an in-person physical exam."
 )
-
-# ── WhatsApp Business API ──────────────────────────────────────────────────────
-WA_VERIFY_TOKEN: str = os.getenv("WA_VERIFY_TOKEN", "my_verify_token")
-WA_ACCESS_TOKEN: str = os.getenv("WA_ACCESS_TOKEN", "")
-WA_APP_SECRET: str = os.getenv("WA_APP_SECRET", "")
-WA_PHONE_ID: str = os.getenv("WA_PHONE_ID", "")
-WA_API_VERSION: str = os.getenv("WA_API_VERSION", "v19.0")
-
-# Comma-separated list of vet WhatsApp numbers, e.g. "923001234567,923009876543"
-VET_NUMBERS: Set[str] = set(filter(None, os.getenv("VET_NUMBERS", "").split(",")))
 
 # ── Runtime ────────────────────────────────────────────────────────────────────
 # Cloud Run sets PORT automatically; default 8080 matches Cloud Run convention.

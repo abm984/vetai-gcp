@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS preclean (
     caption      TEXT,
     sender_id    TEXT,
     sender_name  TEXT,
-    wa_timestamp TEXT,
+    submitted_at TEXT,
     queued_at    TEXT,
     vet_species  TEXT,                   -- filled by vet
     vet_label    TEXT,                   -- filled by vet
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS vet_queue (
     confidence   REAL,
     sender_id    TEXT,
     sender_name  TEXT,
-    wa_timestamp TEXT,
+    submitted_at TEXT,
     queued_at    TEXT,
     vet_label    TEXT,                   -- filled by vet
     vet_id       TEXT,
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS dataset_log (
     label        TEXT,
     sender_id    TEXT,
     sender_name  TEXT,
-    wa_timestamp TEXT,
+    submitted_at TEXT,
     processed_at TEXT,
     status       TEXT,   -- accepted | vet_queue | preclean | rejected
     reason       TEXT

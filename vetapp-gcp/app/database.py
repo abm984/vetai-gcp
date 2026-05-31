@@ -71,7 +71,7 @@ def init_tables() -> None:
                 caption      TEXT,
                 sender_id    TEXT,
                 sender_name  TEXT,
-                wa_timestamp TEXT,
+                submitted_at TEXT,
                 queued_at    TEXT,
                 vet_species  TEXT,
                 vet_label    TEXT,
@@ -91,7 +91,7 @@ def init_tables() -> None:
                 confidence   REAL,
                 sender_id    TEXT,
                 sender_name  TEXT,
-                wa_timestamp TEXT,
+                submitted_at TEXT,
                 queued_at    TEXT,
                 vet_label    TEXT,
                 vet_id       TEXT,
@@ -118,7 +118,7 @@ def init_tables() -> None:
                 label        TEXT,
                 sender_id    TEXT,
                 sender_name  TEXT,
-                wa_timestamp TEXT,
+                submitted_at TEXT,
                 processed_at TEXT,
                 status       TEXT,
                 reason       TEXT
@@ -182,7 +182,7 @@ def increment_split_count(species: str, label: str, split: str) -> None:
 def log_dataset_entry(
     filename: str, species: str, label: str,
     sender_id: str, sender_name: str,
-    wa_timestamp: str, processed_at: str,
+    submitted_at: str, processed_at: str,
     status: str, reason: str,
 ) -> None:
     with get_conn() as conn:
@@ -190,11 +190,11 @@ def log_dataset_entry(
             """
             INSERT INTO dataset_log
               (filename, species, label, sender_id, sender_name,
-               wa_timestamp, processed_at, status, reason)
+               submitted_at, processed_at, status, reason)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
             """,
             (filename, species, label, sender_id, sender_name,
-             wa_timestamp, processed_at, status, reason),
+             submitted_at, processed_at, status, reason),
         )
 
 

@@ -30,7 +30,7 @@ except ImportError:
     pass
 
 from app.config import PORT, TMP_DIR
-from app.routers import predict, llm, webhook, dashboard
+from app.routers import predict, llm, ingest, dashboard
 
 _DASHBOARD_HTML = os.path.join(os.path.dirname(__file__), "..", "dashboard.html")
 
@@ -61,10 +61,10 @@ app = FastAPI(
     title="Ovetra VetApp API",
     description=(
         "Unified veterinary skin-disease diagnostic API.\n\n"
-        "**Two capabilities in one service:**\n"
+        "**Capabilities:**\n"
         "- `/predict` — EfficientNet-V2-S detection + GradCAM explainability\n"
         "- `/llm/*` — Gemini 2.5 Flash treatment plan (streaming SSE)\n"
-        "- `/webhook` — WhatsApp Business data collection pipeline\n"
+        "- `/ingest` — Direct image submission to the dataset pipeline\n"
         "- `/api/*` — Vet review dashboard (preclean, vet_queue, stats)\n"
         "- `/dashboard` — Vet review dashboard UI"
     ),
@@ -89,7 +89,7 @@ app.add_middleware(
 # ── Routers ────────────────────────────────────────────────────────────────────
 app.include_router(predict.router)
 app.include_router(llm.router)
-app.include_router(webhook.router)
+app.include_router(ingest.router)
 app.include_router(dashboard.router)
 
 
@@ -108,6 +108,7 @@ def root():
         "docs":      "/docs",
         "health":    "/health",
         "status":    "/status",
+        "ingest":    "/ingest",
         "dashboard": "/dashboard",
     }
 

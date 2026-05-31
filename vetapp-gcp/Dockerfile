@@ -45,6 +45,8 @@ WORKDIR /app
 COPY app/ ./app/
 COPY dashboard.html ./
 
+# Cloud Run injects PORT; default to 8080
+ENV PORT=8080
 ENV PYTHONUNBUFFERED=1
 ENV TMP_DIR=/tmp/vetapp
 

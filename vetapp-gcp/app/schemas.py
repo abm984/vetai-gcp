@@ -10,9 +10,9 @@ from pydantic import BaseModel, Field
 class PredictRequest(BaseModel):
     """Send a base64-encoded image for disease detection + GradCAM."""
     image: str = Field(..., description="Data URL: 'data:image/jpeg;base64,…'")
-    dog_name: str = ""
-    dog_age: str = ""
-    dog_species: str = ""
+    pet_name: str = Field("", description="Pet's name, e.g. Bruno")
+    pet_age: str = Field("", description="Age in years, e.g. 3")
+    pet_breed: str = Field("", description="Breed/species detail, e.g. Labrador")
 
 
 class PredictResponse(BaseModel):

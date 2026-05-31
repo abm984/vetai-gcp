@@ -113,7 +113,7 @@ def load_model() -> None:
             from app.storage import download_bytes
             weights_bytes = download_bytes(_MODEL_GCS_PATH)
             m = _build_arch()
-            state = torch.load(io.BytesIO(weights_bytes), map_location=DEVICE)
+            state = torch.load(io.BytesIO(weights_bytes), map_location=DEVICE, weights_only=True)
             m.load_state_dict(state)
             m.to(DEVICE).eval()
             _detection_model = m
