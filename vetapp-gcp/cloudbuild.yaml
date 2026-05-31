@@ -59,7 +59,7 @@ steps:
       - --timeout
       - "300"
       - --set-env-vars
-      - PORT=8080,GCS_BUCKET=vetapp-data,GCS_MODELS_PREFIX=models/,GEMINI_MODEL=gemini-2.5-flash
+      - GCS_BUCKET=vetapp-data,GCS_MODELS_PREFIX=models/,GEMINI_MODEL=gemini-2.5-flash
       - --update-secrets
       - GEMINI_API_KEY=gemini-api-key:latest,DATABASE_URL=vetapp-db-url:latest
       - --add-cloudsql-instances
