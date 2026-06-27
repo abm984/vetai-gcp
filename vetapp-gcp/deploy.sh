@@ -64,7 +64,8 @@ if [[ "${LOCAL}" == "1" ]]; then
       --concurrency 10 \
       --timeout 300 \
       --set-env-vars "GCS_BUCKET=${GCS_BUCKET:-vetapp-data},GCS_MODELS_PREFIX=${GCS_MODELS_PREFIX:-models/},GEMINI_MODEL=gemini-2.5-flash" \
-      --update-secrets \
+      --clear-secrets \
+      --set-secrets \
           "GEMINI_API_KEY=gemini-api-key:latest,DATABASE_URL=vetapp-db-url:latest" \
       --add-cloudsql-instances "${PROJECT_ID}:${REGION}:vetapp-db"
 
