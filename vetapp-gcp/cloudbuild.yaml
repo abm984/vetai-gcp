@@ -60,7 +60,8 @@ steps:
       - "300"
       - --set-env-vars
       - GCS_BUCKET=vetapp-data,GCS_MODELS_PREFIX=models/,GEMINI_MODEL=gemini-2.5-flash
-      - --update-secrets
+      - --clear-secrets
+      - --set-secrets
       - GEMINI_API_KEY=gemini-api-key:latest,DATABASE_URL=vetapp-db-url:latest
       - --add-cloudsql-instances
       - $PROJECT_ID:${_REGION}:vetapp-db
