@@ -19,6 +19,7 @@ from typing import Generator
 
 import psycopg2
 from psycopg2 import pool as pg_pool
+from fastapi import HTTPException
 
 from app.config import DATABASE_URL
 
@@ -39,7 +40,8 @@ def init_pool() -> None:
 @contextmanager
 def get_conn() -> Generator[psycopg2.extensions.connection, None, None]:
     """Yield a connection from the pool, auto-commit on success or rollback on error."""
-    assert _pool is not None, "DB pool not initialised — call init_pool() first"
+    if _pool is None:
+        raise HTTPException(status_code=503, detail="Database unavailable — check Cloud SQL connection and DATABASE_URL secret.")
     conn = _pool.getconn()
     try:
         yield conn
