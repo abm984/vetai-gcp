@@ -44,8 +44,11 @@ async def lifespan(app: FastAPI):
     os.makedirs(os.path.join(TMP_DIR, "models"), exist_ok=True)
 
     from app.database import init_pool, init_tables
-    init_pool()
-    init_tables()
+    try:
+        init_pool()
+        init_tables()
+    except Exception as exc:
+        print(f"[STARTUP] DB init failed (continuing without DB): {exc}")
 
     from app.models.detection import load_model
     threading.Thread(target=load_model, daemon=True).start()
