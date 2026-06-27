@@ -63,15 +63,14 @@ if [[ "${LOCAL}" == "1" ]]; then
       --cpu 2 \
       --concurrency 10 \
       --timeout 300 \
+      --min-instances 0 \
+      --max-instances 2 \
+      --cpu-throttling \
       --set-env-vars "GCS_BUCKET=${GCS_BUCKET:-vetapp-data},GCS_MODELS_PREFIX=${GCS_MODELS_PREFIX:-models/},GEMINI_MODEL=gemini-2.5-flash" \
-      --clear-secrets \
-      --set-secrets \
-          "GEMINI_API_KEY=gemini-api-key:latest,DATABASE_URL=vetapp-db-url:latest" \
-      --add-cloudsql-instances "${PROJECT_ID}:${REGION}:vetapp-db"
+      --set-secrets "GEMINI_API_KEY=gemini-api-key:latest,DATABASE_URL=vetapp-db-url:latest,WA_ACCESS_TOKEN=wa-access-token:latest,WA_APP_SECRET=wa-app-secret:latest,WA_VERIFY_TOKEN=wa-verify-token:latest,WA_PHONE_ID=wa-phone-id:latest,VET_NUMBERS=vet-numbers:latest"
 
 else
   # ── Cloud Build mode (default): build + push + deploy run entirely on GCP ──
-  # No local Docker push needed — avoids Cloud Shell networking issues.
   echo "[1/1] Submitting to Cloud Build (build + push + deploy)…"
   gcloud builds submit \
       --config cloudbuild.yaml \
