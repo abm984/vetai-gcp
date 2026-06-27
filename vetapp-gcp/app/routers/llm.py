@@ -95,7 +95,8 @@ def _sse_gemini(prompt: str) -> Generator[str, None, None]:
                 yield "data: [DONE]\n\n"
                 return
             if resp.status_code == 400:
-                yield f"data: {json.dumps({'error': f'Gemini API bad request (400) — model \"{GEMINI_MODEL}\" may be unavailable or the request is malformed.'})}\n\n"
+                msg = f"Gemini API bad request (400) — model \"{GEMINI_MODEL}\" may be unavailable or the request is malformed."
+                yield f"data: {json.dumps({'error': msg})}\n\n"
                 yield "data: [DONE]\n\n"
                 return
             if resp.status_code == 403:
@@ -103,7 +104,8 @@ def _sse_gemini(prompt: str) -> Generator[str, None, None]:
                 yield "data: [DONE]\n\n"
                 return
             if not resp.ok:
-                yield f"data: {json.dumps({'error': f'Gemini API error {resp.status_code}. Check your API key and try again.'})}\n\n"
+                msg = f"Gemini API error {resp.status_code}. Check your API key and try again."
+                yield f"data: {json.dumps({'error': msg})}\n\n"
                 yield "data: [DONE]\n\n"
                 return
             for line in resp.iter_lines():
@@ -131,7 +133,8 @@ def _sse_gemini(prompt: str) -> Generator[str, None, None]:
     except _requests.exceptions.ConnectionError:
         yield f"data: {json.dumps({'error': 'Could not connect to Gemini API. Check network connectivity.'})}\n\n"
     except Exception as exc:
-        yield f"data: {json.dumps({'error': f'Gemini error: {type(exc).__name__}'})}\n\n"
+        msg = f"Gemini error: {type(exc).__name__}"
+        yield f"data: {json.dumps({'error': msg})}\n\n"
 
     yield "data: [DONE]\n\n"
 
